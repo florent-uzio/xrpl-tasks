@@ -1,6 +1,14 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common"
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  OnModuleInit,
+} from "@nestjs/common"
 import { Cron, CronExpression } from "@nestjs/schedule"
-import { Client } from "xrpl"
+import { Client, Request, SubmittableTransaction } from "xrpl"
+import { convertCurrencyCodeToHex, deepReplace } from "./helpers"
+import { SubmitTxnAndWaitProps } from "./xrpl.services.types"
 
 @Injectable()
 export class XrplService implements OnModuleInit {
@@ -50,5 +58,61 @@ export class XrplService implements OnModuleInit {
     } else {
       this.logger.log("XRPL WebSocket is connected")
     }
+  }
+
+  /**
+   * Submit a transaction to the XRPL and wait for the response
+   * @param props The transaction properties with the wallet
+   * @returns A {@link Promise} of the response
+   */
+  public async submitTxnAndWait<T extends SubmittableTransaction>(props: SubmitTxnAndWaitProps<T>) {
+    if (!this.client.isConnected()) {
+      throw new InternalServerErrorException("XRPL WebSocket is not connected")
+    }
+
+    if (props.isMultisign) {
+      // TODO
+      //await multiSignAndSubmit(props.signatures, props.client)
+    } else {
+      const { wallet, txn, showLogs = true } = props
+
+      if (showLogs) {
+        this.logger.log(`Submitting: ${txn.TransactionType}`)
+      }
+
+      // Make sure the originating transaction address is the same as the wallet public address
+      if (props.txn.Account !== wallet.address) {
+        throw new BadRequestException("Field 'Account' must have the same address as the Wallet")
+      }
+
+      // Update the currency in case it has more than 3 characters
+      const updatedTxn = deepReplace(txn, "currency", (key, value) => {
+        return { [key]: convertCurrencyCodeToHex(value) }
+      })
+
+      // Submit to the XRPL and wait for the response
+      const response = await this.client.submitAndWait(updatedTxn, { autofill: true, wallet })
+
+      return response
+    }
+  }
+
+  /**
+   * Submit a request to the XRPL such as account_info, account_lines, etc.
+   * @param req The request to submit
+   * @returns The request response
+   */
+  public async submitMethod(req: Request, showLogs = true) {
+    if (!this.client.isConnected()) {
+      throw new InternalServerErrorException("XRPL WebSocket is not connected")
+    }
+
+    if (showLogs) {
+      this.logger.log(`Submitting: ${req.command}`)
+    }
+
+    const response = await this.client.request(req)
+
+    return response
   }
 }
