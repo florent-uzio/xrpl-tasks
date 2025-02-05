@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
-import { XrplService } from './xrpl.service';
-import { XrplController } from './xrpl.controller';
+import { Module } from "@nestjs/common"
+import { XrplController } from "./xrpl.controller"
+import { XrplService } from "./xrpl.service"
 
 @Module({
   controllers: [XrplController],
   providers: [XrplService],
+  exports: [XrplService],
 })
 export class XrplModule {}
