@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "node apps/backend/dist/main"
   },
   "keywords": [],
   "author": "",
@@ -14,5 +16,6 @@
   },
   "workspaces": [
     "apps/*"
-  ]
+  ],
+  "packageManager": "npm@10.8.2"
 }
