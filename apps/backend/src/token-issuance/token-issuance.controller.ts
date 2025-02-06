@@ -1,14 +1,14 @@
 import { Body, Controller, Post } from "@nestjs/common"
 import { TokenIssuanceDto } from "./dto"
-import { TasksService } from "./tasks.service"
+import { TokenIssuanceService } from "./token-issuance.service"
 
-@Controller("tasks")
-export class TasksController {
-  constructor(private readonly tasksService: TasksService) {}
+@Controller("token-issuance")
+export class TokenIssuanceController {
+  constructor(private readonly tokenIssuanceService: TokenIssuanceService) {}
 
   @Post("token-issuance")
   async runTokenIssuanceTasks(@Body() props: TokenIssuanceDto) {
-    const tasks = await this.tasksService.runTokenIssuanceTasks(props)
+    const tasks = await this.tokenIssuanceService.runTokenIssuanceTasks(props)
     const context = await tasks.run()
     return {
       issuer: context.issuer,

@@ -3,12 +3,12 @@ import { Listr } from "listr2"
 import { Wallet } from "xrpl"
 import { XrplService } from "../xrpl"
 import { TokenIssuanceDto } from "./dto"
-import { TokenIssuanceContext } from "./models"
 import { createWalletsTasks } from "./sub-tasks"
+import { TokenIssuanceContext } from "./token-issuance.types"
 
 @Injectable()
-export class TasksService {
-  private readonly logger = new Logger(TasksService.name)
+export class TokenIssuanceService {
+  private readonly logger = new Logger(TokenIssuanceService.name)
 
   constructor(private readonly xrplService: XrplService) {}
 
@@ -37,7 +37,7 @@ export class TasksService {
       task: (ctx, task) => {
         this.logTaskStart(task.title)
 
-        const walletsTasks = createWalletsTasks(ctx, props)
+        const walletsTasks = createWalletsTasks(props)
         const subtasks = task.newListr<TokenIssuanceContext>(walletsTasks, {
           concurrent: true,
         })

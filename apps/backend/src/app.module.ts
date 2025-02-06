@@ -4,7 +4,7 @@ import { ServeStaticModule } from "@nestjs/serve-static"
 import { join } from "path"
 import { AppController } from "./app.controller"
 import { AppService } from "./app.service"
-import { TasksModule } from "./tasks/tasks.module"
+import { TokenIssuanceModule } from "./token-issuance/token-issuance.module"
 import { XrplModule } from "./xrpl/xrpl.module"
 
 @Module({
@@ -14,7 +14,7 @@ import { XrplModule } from "./xrpl/xrpl.module"
     }),
     ScheduleModule.forRoot(),
     XrplModule,
-    TasksModule,
+    TokenIssuanceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

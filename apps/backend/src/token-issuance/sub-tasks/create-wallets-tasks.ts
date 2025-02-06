@@ -1,8 +1,8 @@
 import { InternalServerErrorException, Logger } from "@nestjs/common"
 import { ListrTask } from "listr2"
-import { isUndefined } from "../../../helpers"
-import { TokenIssuanceDto } from "../../dto"
-import { TokenIssuanceContext } from "../../models"
+import { isUndefined } from "../../helpers"
+import { TokenIssuanceDto } from "../dto"
+import { TokenIssuanceContext } from "../token-issuance.types"
 
 type CreateWalletsProps = Pick<
   TokenIssuanceDto,
@@ -14,14 +14,15 @@ const logger = new Logger("WalletTasks")
 /**
  * Create the tasks to create wallets
  */
-export const createWalletsTasks = (
-  ctx: TokenIssuanceContext,
-  { operationalAccountCount, holderAccountCount, fundingOptions }: CreateWalletsProps,
-): ListrTask<TokenIssuanceContext>[] => {
+export const createWalletsTasks = ({
+  operationalAccountCount,
+  holderAccountCount,
+  fundingOptions,
+}: CreateWalletsProps): ListrTask<TokenIssuanceContext>[] => {
   return [
     {
       title: "Creating issuer",
-      task: async () => {
+      task: async (ctx) => {
         logger.log(`🚀 Creating issuer wallet...`)
         try {
           await ctx.client.fundWallet(ctx.issuer, fundingOptions)
@@ -36,7 +37,7 @@ export const createWalletsTasks = (
     {
       title: "Creating operational account(s)",
       enabled: () => !isUndefined(operationalAccountCount) && operationalAccountCount > 0,
-      task: async () => {
+      task: async (ctx) => {
         logger.log(`🚀 Creating ${operationalAccountCount} operational accounts...`)
         try {
           const operationalAccounts = Array.from(
@@ -61,7 +62,7 @@ export const createWalletsTasks = (
     {
       title: "Creating holder account(s)",
       enabled: () => holderAccountCount > 0,
-      task: async () => {
+      task: async (ctx) => {
         logger.log(`🚀 Creating ${holderAccountCount} holder accounts...`)
         try {
           const holderAccounts = Array.from({ length: holderAccountCount ?? 0 }, async () => {
