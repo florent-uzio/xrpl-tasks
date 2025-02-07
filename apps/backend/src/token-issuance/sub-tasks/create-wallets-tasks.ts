@@ -33,7 +33,6 @@ export const createWalletsTasks = ({
         }
       },
     },
-
     {
       title: "Creating operational account(s)",
       enabled: () => !isUndefined(operationalAccountCount) && operationalAccountCount > 0,
