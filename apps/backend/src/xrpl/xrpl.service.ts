@@ -102,7 +102,7 @@ export class XrplService implements OnModuleInit {
    * @param req The request to submit
    * @returns The request response
    */
-  public async submitMethod(req: Request, showLogs = true) {
+  public async submitMethod<T extends Request>(req: T, showLogs = true) {
     if (!this.client.isConnected()) {
       throw new InternalServerErrorException("XRPL WebSocket is not connected")
     }
