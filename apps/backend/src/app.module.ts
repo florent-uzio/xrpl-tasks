@@ -7,6 +7,7 @@ import { AppController } from "./app.controller"
 import { AppService } from "./app.service"
 import { TokenIssuanceModule } from "./token-issuance/token-issuance.module"
 import { XrplModule } from "./xrpl/xrpl.module"
+import { TaskEmitterModule } from './task-emitter/task-emitter.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { XrplModule } from "./xrpl/xrpl.module"
     XrplModule,
     TokenIssuanceModule,
     EventEmitterModule.forRoot(),
+    TaskEmitterModule,
   ],
   controllers: [AppController],
   providers: [AppService],

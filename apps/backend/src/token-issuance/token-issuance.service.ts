@@ -1,10 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common"
-import { EventEmitter2 } from "@nestjs/event-emitter"
 import { Listr } from "listr2"
 import { Wallet } from "xrpl"
+import { TaskEmitterService } from "../task-emitter"
 import { XrplService } from "../xrpl"
 import { TokenIssuanceDto } from "./dto"
-import { TokenIssuanceContext } from "./token-issuance.types"
+import { CreateWalletsService } from "./sub-tasks"
+import { TokenIssuanceContext, TokenIssuanceTasksTitles } from "./token-issuance.types"
 
 @Injectable()
 export class TokenIssuanceService {
@@ -12,7 +13,8 @@ export class TokenIssuanceService {
 
   constructor(
     private readonly xrplService: XrplService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly taskEmitter: TaskEmitterService,
+    private readonly createWalletsService: CreateWalletsService,
   ) {}
 
   async runTokenIssuanceTasks(props: TokenIssuanceDto) {
@@ -24,9 +26,9 @@ export class TokenIssuanceService {
     })
 
     tasks.add({
-      title: "Initializing the context",
+      title: TokenIssuanceTasksTitles.InitializeContext,
       task: async (ctx, task) => {
-        this.emitTaskUpdate(task.title, "started")
+        this.taskEmitter.emitTaskUpdate(task.title, "started")
         this.logTaskStart(task.title)
 
         ctx.client = this.xrplService.getClient()
@@ -36,23 +38,17 @@ export class TokenIssuanceService {
         ctx.issuerTickets = []
 
         this.logTaskComplete(task.title)
-        this.emitTaskUpdate(task.title, "completed")
+        this.taskEmitter.emitTaskUpdate(task.title, "completed")
       },
     })
 
     tasks.add({
-      title: "Creating wallets",
-      task: (_, task) => {
-        this.emitTaskUpdate(task.title, "started")
-        this.logTaskStart(task.title)
-
-        // const walletsTasks = createWalletsTasks(props)
-        const subtasks = task.newListr<TokenIssuanceContext>([], {
+      title: TokenIssuanceTasksTitles.GenerateWallets,
+      task: async (_, task) => {
+        const walletsTasks = this.createWalletsService.getTasks(props)
+        const subtasks = task.newListr<TokenIssuanceContext>(walletsTasks, {
           concurrent: true,
         })
-
-        this.logTaskComplete(task.title)
-        this.emitTaskUpdate(task.title, "completed")
 
         return subtasks
       },
@@ -71,10 +67,5 @@ export class TokenIssuanceService {
 
   private logTaskError(title: string, error: any) {
     this.logger.error(`❌ Failed: ${title}`, error.stack || error.message)
-  }
-
-  private emitTaskUpdate(task: string, status: "started" | "completed" | "failed") {
-    this.logger.log(`📢 Task Update: ${task} - ${status}`)
-    this.eventEmitter.emit("task.update", { task, status })
   }
 }
